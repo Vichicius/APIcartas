@@ -15,6 +15,10 @@ class CreateVentasTable extends Migration
     {
         Schema::create('ventas', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('usuario_id')->constrained();
+            $table->foreignId('carta_id')->constrained();
+            $table->float('price');
+            $table->integer('quantity');
             $table->timestamps();
         });
     }

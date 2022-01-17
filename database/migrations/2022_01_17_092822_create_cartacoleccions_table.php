@@ -15,6 +15,8 @@ class CreateCartacoleccionsTable extends Migration
     {
         Schema::create('cartacoleccions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('carta_id')->constrained();
+            $table->foreignId('coleccion_id')->constrained();
             $table->timestamps();
         });
     }

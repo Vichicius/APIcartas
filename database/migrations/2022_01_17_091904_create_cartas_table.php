@@ -15,6 +15,8 @@ class CreateCartasTable extends Migration
     {
         Schema::create('cartas', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('description');
             $table->timestamps();
         });
     }
