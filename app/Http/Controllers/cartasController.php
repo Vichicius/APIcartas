@@ -14,6 +14,7 @@ class cartasController extends Controller
     public function register(Request $req){ //Pide: api_token, nickname, email, password y rol
         $jdata = $req->getContent();
         $data = json_decode($jdata);
+        $response["status"]=1;
 
         if($data->nickname && $data->email && $data->password && $data->rol){
             try{
@@ -24,7 +25,8 @@ class cartasController extends Controller
                     $user->password = Hash::make($data->password);
                 }else{
                     $response["status"]=0;
-                    $response["msg"]="Contraseña insegura. Mínimo: 1 Mayúscula, 1 minúscula, 1 caracter especial y 1 número";
+                    throw new Exception("Error al asignar el rol");
+                    $response["msg"]="";
                     return response()->json($response);
                 }
                 $roles = ['particular', 'profesional', 'administrador'];
@@ -32,16 +34,16 @@ class cartasController extends Controller
                 if(in_array($data->rol,$roles)){
                     $user->rol = $data->rol;
                 }else{
-                    throw new Exception("Error al asignar el rol", 1); //comprobar q esto funciona
+                    $response["status"]=0;
+                    throw new Exception("Error al asignar el rol"); //comprobar q esto funciona
                 }
 
                 $user->save();
-                $response["status"]=1;
                 $response["msg"]="Guardado con éxito";
 
             }catch(\Exception $e){
                 $response["status"]=0;
-                $response["msg"]="Error al intentar guardar el usuario: ".$e;
+                $response["msg"]=$e->getMessage();
             }
             
         }else{
@@ -55,16 +57,23 @@ class cartasController extends Controller
 
     public function login(Request $req){ //Pide: nickname y password
         $jdata = $req->getContent();
-        $data = json_decode($jdata);  
-        $user = Usuario::
+        $data = json_decode($jdata);
+        $response["status"]=1;
         try{
             if($data->nickname && $data->password){
+                $user = Usuario::where('nickname', $data->nickname)->first();
+                if(!isset($user)){
+                    throw new Exception("Error: Nickname no existe");
+                }
                 if(Hash::check($data->password, $user->password)){
+
+                }else{
 
                 }
             }
         }catch(\Exception $e){
-
+            $response["status"]=0;
+            $response["msg"]=$e->getMessage();
         }
         return response()->json($response);
     }
