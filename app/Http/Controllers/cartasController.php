@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Usuario;
+use App\Models\Carta;
 use Exception;
 use DateTime;
 use Illuminate\Support\Facades\Hash;
@@ -117,6 +118,50 @@ class cartasController extends Controller
                 $response["msg"]=$newPass;
             }else{
                 throw new Exception("No has introducido nickname");
+            }
+        }catch(\Exception $e){
+            $response["status"]=0;
+            $response["msg"]=$e->getMessage();
+        }
+        return response()->json($response);
+    }
+
+    public function crearCarta(Request $req){ //Pide: name, description y collection (opcional imagen)
+        $jdata = $req->getContent();
+        $data = json_decode($jdata);
+
+        $response["status"]=1;
+
+        $carta = new Carta;
+        try{
+            if($data->name && $data->description && $data->collection){
+                //COMPROBAR QUE LA COLECCION EXISTE ANTES DE TODOOOOOO
+                $carta->name = $data->name;
+                $carta->description = $data->description;
+
+                //GUARDARLO EN LA OTRA TABLA (CAMBIAR ESTOOOOO)
+                $carta->collection = $data->collection;
+            }else{
+                throw new Exception("Error: Introduce name, description y collection");
+            }
+        }catch(\Exception $e){
+            $response["status"]=0;
+            $response["msg"]=$e->getMessage();
+        }
+        return response()->json($response);
+    }
+
+    public function crearColecion(Request $req){ //Pide: name, description y collection (opcional imagen)
+        $jdata = $req->getContent();
+        $data = json_decode($jdata);
+
+        $response["status"]=1;
+        try{
+            if($data->name && $data->description && ){
+                //throw new Exception("Error: Contraseña incorrecta");
+
+            }else{
+                throw new Exception("Error: Introduce name, description y collection");
             }
         }catch(\Exception $e){
             $response["status"]=0;
