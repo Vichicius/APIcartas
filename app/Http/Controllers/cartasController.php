@@ -21,11 +21,10 @@ class cartasController extends Controller
             try{
                 $user = new Usuario;
                 $user->name = $data->name;
-                $user->email = $data->email;
+                $user->email = $data->email; //validar email
                 if(preg_match("/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/", $data->password)){
                     $user->password = Hash::make($data->password);
                 }else{
-                    $response["status"]=0;
                     throw new Exception("Contraseña insegura. Mínimo: 1 Mayúscula, 1 minúscula, 1 caracter especial y 1 número");
                 }
                 $roles = ['particular', 'profesional', 'administrador'];
@@ -33,8 +32,7 @@ class cartasController extends Controller
                 if(in_array($data->rol,$roles)){
                     $user->rol = $data->rol;
                 }else{
-                    $response["status"]=0;
-                    throw new Exception("Error al asignar el rol"); //comprobar q esto funciona
+                    throw new Exception("Error: Rol introducido incorrecto");
                 }
 
                 $user->save();
@@ -71,6 +69,8 @@ class cartasController extends Controller
                         $user->api_token = Hash::make(now().$user->email);
                     } while (in_array($user->api_token, $allTokens)); //En bucle mientras que el apitoken esté duplicado
                     $user->save();
+                    $response["msg"] = "sesion iniciada correctamente";
+                    $response["api_token"] = $user->api_token;
 
                 }else{
                     //contraseña incorrecta
@@ -111,8 +111,10 @@ class cartasController extends Controller
                 if(!isset($user)){
                     throw new Exception("Nickname no existe");
                 }
-                $user->password = Str::random(16);
+                $newPass = Str::random(16);
+                $user->password = Hash::make($newPass);
                 $user->save();
+                $response["msg"]=$newPass;
             }else{
                 throw new Exception("No has introducido nickname");
             }
