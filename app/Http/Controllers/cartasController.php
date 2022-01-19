@@ -7,6 +7,7 @@ use App\Models\Usuario;
 use Exception;
 use DateTime;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class cartasController extends Controller
 {
@@ -83,5 +84,44 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
-    
+    public function plantilla(Request $req){ //Pide: nickname y password
+        $jdata = $req->getContent();
+        $data = json_decode($jdata);
+
+        $response["status"]=1;
+        try{
+            if($data->nickname && $data->password){
+                //throw new Exception("Error: Contraseña incorrecta");
+            }
+        }catch(\Exception $e){
+            $response["status"]=0;
+            $response["msg"]=$e->getMessage();
+        }
+        return response()->json($response);
+    }
+
+    public function passRecovery(Request $req){ //Pide: nickname
+        $jdata = $req->getContent();
+        $data = json_decode($jdata);
+
+        $response["status"]= 1;
+        try{
+            if($data->nickname){
+                $user = User::where('nickname', $data->nickname)->first();
+                if(!isset($user)){
+                    throw new Exception("Nickname no existe");
+                }
+                $user->password = Str::random(16);
+                $user->save();
+            }else{
+                throw new Exception("No has introducido nickname");
+            }
+        }catch(\Exception $e){
+            $response["status"]=0;
+            $response["msg"]=$e->getMessage();
+        }
+        return response()->json($response);
+    }
+
+
 }
