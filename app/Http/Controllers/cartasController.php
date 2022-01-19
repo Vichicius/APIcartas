@@ -25,9 +25,7 @@ class cartasController extends Controller
                     $user->password = Hash::make($data->password);
                 }else{
                     $response["status"]=0;
-                    throw new Exception("Error al asignar el rol");
-                    $response["msg"]="";
-                    return response()->json($response);
+                    throw new Exception("Contraseña insegura. Mínimo: 1 Mayúscula, 1 minúscula, 1 caracter especial y 1 número");
                 }
                 $roles = ['particular', 'profesional', 'administrador'];
 
@@ -66,9 +64,16 @@ class cartasController extends Controller
                     throw new Exception("Error: Nickname no existe");
                 }
                 if(Hash::check($data->password, $user->password)){
+                    
+                    $allTokens = User::pluck('api_token')->toArray();
+                    do {
+                        $user->api_token = Hash::make(now().$user->email);
+                    } while (in_array($user->api_token, $allTokens)); //En bucle mientras que el apitoken esté duplicado
+                    $user->save();
 
                 }else{
-
+                    //contraseña incorrecta
+                    throw new Exception("Error: Contraseña incorrecta");
                 }
             }
         }catch(\Exception $e){
@@ -77,4 +82,6 @@ class cartasController extends Controller
         }
         return response()->json($response);
     }
+
+    
 }
