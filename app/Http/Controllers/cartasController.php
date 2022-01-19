@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Usuario;
 use App\Models\Carta;
+use App\Models\Coleccion;
+use App\Models\Cartacoleccion;
 use Exception;
 use DateTime;
 use Illuminate\Support\Facades\Hash;
@@ -126,21 +128,34 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
-    public function crearCarta(Request $req){ //Pide: name, description y collection (opcional imagen)
+    public function crearCarta(Request $req){ //Pide: name, description y collection (opcional image)
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
         $response["status"]=1;
 
         $carta = new Carta;
+        $cartacoleccion = new Cartacoleccion;
+
         try{
             if($data->name && $data->description && $data->collection){
-                //COMPROBAR QUE LA COLECCION EXISTE ANTES DE TODOOOOOO
+
+                $collection = Coleccion::find($data->collection);
+                if(!isset($collection)){
+                    throw new Exception("Error: La coleccion introducida no existe");
+                }
+                //crear carta
                 $carta->name = $data->name;
                 $carta->description = $data->description;
-
-                //GUARDARLO EN LA OTRA TABLA (CAMBIAR ESTOOOOO)
-                $carta->collection = $data->collection;
+                if(isset($data->image)){
+                    $carta->image = $data->image;
+                }
+                $carta->save();
+                //vincularla a la coleccion
+                $cartacoleccion->carta_id = $carta->id;
+                $cartacoleccion->coleccion_id = $data->collection;
+                $cartacoleccion->save();
+                $response["msg"] = "Carta creada con éxito. ID: $carta->id";
             }else{
                 throw new Exception("Error: Introduce name, description y collection");
             }
@@ -156,12 +171,33 @@ class cartasController extends Controller
         $data = json_decode($jdata);
 
         $response["status"]=1;
+        $carta = new Carta;
+        $coleccion = new Coleccion;
+        $cartacoleccion = new Cartacoleccion;
         try{
-            if($data->name && $data->description && ){
-                //throw new Exception("Error: Contraseña incorrecta");
-
+            if($data->name_coleccion && $data->symbol_coleccion && $data->release_date_coleccion && $data->name_card && $data->description_card){
+                //crear colección vacía
+                $coleccion->name = $data->name_coleccion;
+                $coleccion->symbol = $data->symbol_coleccion;
+                $coleccion->release_date = $data->release_date_coleccion; //validar fecha
+                $coleccion->save();
+                //crear carta
+                $carta->name = $data->name;
+                $carta->description = $data->description;
+                if(isset($data->image)){
+                    $carta->image = $data->image;
+                }
+                $carta->save();
+                //vincular carta a la colección
+                $cartacoleccion->carta_id = $carta->id;
+                $cartacoleccion->coleccion_id = $coleccion->id;
+                $cartacoleccion->save();
+                //responder
+                $response["msg"] = "Colección y carta creada con éxito";
+                $response["id"]["Coleccion"] = $coleccion->id;
+                $response["id"]["Carta"] = $carta->id;
             }else{
-                throw new Exception("Error: Introduce name, description y collection");
+                throw new Exception("Error: Introduce name_coleccion, symbol_coleccion, release_date_coleccion, name_card y description_card");
             }
         }catch(\Exception $e){
             $response["status"]=0;
@@ -171,4 +207,16 @@ class cartasController extends Controller
     }
 
 
+    //FUNCIONES ADMIN:
+    //editar carta
+    //añadir carta a coleccion
+    //editar coleccion
+    //quitar carta de coleccion
+
+    /*
+        $cartacoleccionRepetida = Cartacoleccion::where('carta_id', $carta->id)->where('coleccion_id', $data->collection);
+        if(isset($cartacoleccionRepetida)){
+            throw new Exception("Error: Esta carta ya está en esta colección");
+        }//Probar si funciona esto
+    */
 }
