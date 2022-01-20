@@ -21,7 +21,7 @@ class cartasController extends Controller
         $data = json_decode($jdata);
         $response["status"]=1;
 
-        if($data->nickname && $data->email && $data->password && $data->rol){
+        if(isset($data->nickname) && isset($data->email) && isset($data->password) && isset($data->rol)){
             try{
                 $user = new Usuario;
                 $user->name = $data->name;
@@ -61,7 +61,7 @@ class cartasController extends Controller
         $data = json_decode($jdata);
         $response["status"]=1;
         try{
-            if($data->nickname && $data->password){
+            if(isset($data->nickname) && isset($data->password)){
                 $user = Usuario::where('nickname', $data->nickname)->first();
                 if(!isset($user)){
                     throw new Exception("Error: Nickname no existe");
@@ -94,7 +94,7 @@ class cartasController extends Controller
 
         $response["status"]=1;
         try{
-            if($data->nickname && $data->password){
+            if(isset($data->nickname) && isset($data->password)){
                 
             }else{
                 throw new Exception("Error: ");
@@ -112,7 +112,7 @@ class cartasController extends Controller
 
         $response["status"]= 1;
         try{
-            if($data->nickname){
+            if(isset($data->nickname)){
                 $user = Usuario::where('nickname', $data->nickname)->first();
                 if(!isset($user)){
                     throw new Exception("Nickname no existe");
@@ -142,7 +142,7 @@ class cartasController extends Controller
         $cartacoleccion = new Cartacoleccion;
 
         try{
-            if($data->name && $data->description && $data->collection){
+            if(isset($data->name) && isset($data->description) && isset($data->collection)){
 
                 $collection = Coleccion::find($data->collection);
                 if(!isset($collection)){
@@ -179,7 +179,7 @@ class cartasController extends Controller
         $coleccion = new Coleccion;
         $cartacoleccion = new Cartacoleccion;
         try{
-            if($data->name_coleccion && $data->symbol_coleccion && $data->release_date_coleccion && $data->name_card && $data->description_card){
+            if(isset($data->name_coleccion) && isset($data->symbol_coleccion) && isset($data->release_date_coleccion) && isset($data->name_card) && isset($data->description_card)){
                 //crear colección vacía
                 $coleccion->name = $data->name_coleccion;
                 $coleccion->symbol = $data->symbol_coleccion;
@@ -216,7 +216,7 @@ class cartasController extends Controller
 
         $response["status"]=1;
         try{
-            if($data->carta_id && $data->coleccion_id){
+            if(isset($data->carta_id) && isset($data->coleccion_id)){
                 //checkear si existen
                 $carta = Carta::find($data->carta_id);
                 $coleccion = Coleccion::find($data->coleccion_id);
@@ -250,7 +250,7 @@ class cartasController extends Controller
 
         $response["status"]=1;
         try{
-            if($data->usuario_id && $data->carta_id && $data->quantity && $data->price){
+            if(isset($data->usuario_id) && isset($data->carta_id) && isset($data->quantity) && isset($data->price)){
                 $user = Usuario::find($data->usuario_id);
                 $carta = Carta::find($data->carta_id);
                 if($user == null){
@@ -288,7 +288,7 @@ class cartasController extends Controller
 
         $response["status"]=1;
         try{
-            if($data->name){
+            if(isset($data->name)){
                 $listaNombres = Cartas::pluck('name');
                 foreach ($listaNombres as $key => $nombreCompleto) {
                     if(str_contains($nombreCompleto, $data->name)){
@@ -317,7 +317,7 @@ class cartasController extends Controller
 
         $response["status"]=1;
         try{
-            if($data->name){
+            if(isset($data->name)){
                 $listaNombres = Venta::pluck('name');
                 $coincidencias = [];
                 $response["msg"] = "No hay ninguna coincidencia";
