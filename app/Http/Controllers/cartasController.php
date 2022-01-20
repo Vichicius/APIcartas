@@ -330,7 +330,13 @@ class cartasController extends Controller
                 usort($coincidencias, function($object1, $object2) {
                     return $object1->price > $object2->price;
                 });
-                $response["coincidencias"] = $coincidencias;
+
+                foreach ($coincidencias as $key => $anuncio) {
+                    $response["coincidencias"][]["Carta"] = $anuncio->name;
+                    $response["coincidencias"][]["Cantidad"] = $anuncio->quantity;
+                    $response["coincidencias"][]["Precio"] = $anuncio->price;
+                    $response["coincidencias"][]["Vendedor"] = (Usuario::find($anuncio->usuario_id))->name;
+                }
             }else{
                 throw new Exception("Error: Introduce un nombre de una carta (name)");
             }
@@ -340,12 +346,6 @@ class cartasController extends Controller
         }
         return response()->json($response);
     }
-
-
-    //VENTA CARTAS
-    //poner articulo
-    //buscar cartas por nombre (devolver id)
-    //buscar anuncios por nombre || ordenar de mayor a menor || mostrar: nombre cantidad precio vendedor
 
     //FUNCIONES ADMIN:
     //añadir carta a coleccion     X
