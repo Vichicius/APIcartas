@@ -120,7 +120,8 @@ class cartasController extends Controller
                 $newPass = Str::random(16);
                 $user->password = Hash::make($newPass);
                 $user->save();
-                $response["msg"]=$newPass;
+                $response["msg"]="Contraseña cambiada.";
+                $response["Password"]=$newPass;
             }else{
                 throw new Exception("No has introducido nickname");
             }
@@ -169,7 +170,7 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
-    public function crearColecion(Request $req){ //Pide: name, description y collection (opcional imagen)
+    public function crearColecion(Request $req){ //Pide: name_coleccion, symbol_coleccion, release_date_coleccion, name_card, description_card (opcional imagen)
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
@@ -185,8 +186,8 @@ class cartasController extends Controller
                 $coleccion->release_date = $data->release_date_coleccion; //validar fecha
                 $coleccion->save();
                 //crear carta
-                $carta->name = $data->name;
-                $carta->description = $data->description;
+                $carta->name = $data->name_card;
+                $carta->description = $data->description_card;
                 if(isset($data->image)){
                     $carta->image = $data->image;
                 }
