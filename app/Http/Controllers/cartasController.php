@@ -7,6 +7,7 @@ use App\Models\Usuario;
 use App\Models\Carta;
 use App\Models\Coleccion;
 use App\Models\Cartacoleccion;
+use App\Models\Venta;
 use Exception;
 use DateTime;
 use Illuminate\Support\Facades\Hash;
@@ -67,7 +68,7 @@ class cartasController extends Controller
                 }
                 if(Hash::check($data->password, $user->password)){
                     
-                    $allTokens = User::pluck('api_token')->toArray();
+                    $allTokens = Usuario::pluck('api_token')->toArray();
                     do {
                         $user->api_token = Hash::make(now().$user->email);
                     } while (in_array($user->api_token, $allTokens)); //En bucle mientras que el apitoken esté duplicado
@@ -110,7 +111,7 @@ class cartasController extends Controller
         $response["status"]= 1;
         try{
             if($data->nickname){
-                $user = User::where('nickname', $data->nickname)->first();
+                $user = Usuario::where('nickname', $data->nickname)->first();
                 if(!isset($user)){
                     throw new Exception("Nickname no existe");
                 }
@@ -213,9 +214,16 @@ class cartasController extends Controller
         $response["status"]=1;
         try{
             if($data->carta_id && $data->coleccion_id){
+                //checkear si existen
                 $carta = Carta::find($data->carta_id);
                 $coleccion = Coleccion::find($data->coleccion_id);
-                $cartacoleccionRepetida = Cartacoleccion::where('carta_id', $carta->id)->where('coleccion_id', $data->collection);
+                if($coleccion == null){
+                    throw new Exception("Error: Colección no encontrado");
+                }
+                if($carta == null){
+                    throw new Exception("Error: Carta no encontrada");
+                }
+                $cartacoleccionRepetida = Cartacoleccion::where('carta_id', $carta->id)->where('coleccion_id', $data->collection)->first();
                 if(isset($cartacoleccionRepetida)){
                     throw new Exception("Error: Esta carta ya está en esta colección");
                 }//Probar si funciona esto
@@ -224,7 +232,7 @@ class cartasController extends Controller
                 $cartacoleccion->coleccion_id = $data->coleccion_id;
                 $cartacoleccion->save();
             }else{
-                throw new Exception("Error: Contraseña incorrecta");
+                throw new Exception("Error: Introduce carta_id y coleccion_id");
             }
         }catch(\Exception $e){
             $response["status"]=0;
@@ -233,18 +241,51 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
+    public function crearVenta(Request $req){ //Pide: api_token, usuario_id, carta_id, quantity, price
+        $jdata = $req->getContent();
+        $data = json_decode($jdata);
 
+        $response["status"]=1;
+        try{
+            if($data->usuario_id && $data->carta_id && $data->quantity && $data->price){
+                $user = Usuario::find($data->usuario_id);
+                $carta = Carta::find($data->carta_id);
+                if($user == null){
+                    throw new Exception("Error: Usuario no encontrado");
+                }
+                if($carta == null){
+                    throw new Exception("Error: Carta no encontrada");
+                }
+                if($data->quantity < 1){
+                    throw new Exception("Error: Vende al menos una carta");
+                }
+                if($data->price < 0.01){
+                    throw new Exception("Error: Precio mínimo es 0.01€");
+                }
+                $articulo = new Venta;
+                $articulo->usuario_id = $data->usuario_id;
+                $articulo->carta_id = $data->carta_id;
+                $articulo->quantity = $data->quantity;
+                $articulo->price = $data->price;
+                $articulo->save();
+            }else{
+                throw new Exception("Error: introduce api_token, usuario_id, carta_id, quantity, price");
+            }
+        }catch(\Exception $e){
+            $response["status"]=0;
+            $response["msg"]=$e->getMessage();
+        }
+        return response()->json($response);
+    }
+
+    //VENTA CARTAS
+    //poner articulo
+    //buscar cartas por nombre (devolver id)
+    //buscar anuncios por nombre || ordenar de mayor a menor || mostrar: nombre cantidad precio vendedor
 
     //FUNCIONES ADMIN:
-    //editar carta
-    //añadir carta a coleccion
-    //editar coleccion
-    //quitar carta de coleccion
-
-    /*
-        $cartacoleccionRepetida = Cartacoleccion::where('carta_id', $carta->id)->where('coleccion_id', $data->collection);
-        if(isset($cartacoleccionRepetida)){
-            throw new Exception("Error: Esta carta ya está en esta colección");
-        }//Probar si funciona esto
-    */
+    //añadir carta a coleccion     X
+    //quitar carta de coleccion    -
+    //editar carta                 -
+    //editar coleccion             -
 }
