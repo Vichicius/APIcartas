@@ -88,14 +88,16 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
-    public function plantilla(Request $req){ //Pide: nickname y password
+    public function plantilla(Request $req){ //Pide: 
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
         $response["status"]=1;
         try{
             if($data->nickname && $data->password){
-                //throw new Exception("Error: Contraseña incorrecta");
+                
+            }else{
+                throw new Exception("Error: ");
             }
         }catch(\Exception $e){
             $response["status"]=0;
@@ -265,6 +267,7 @@ class cartasController extends Controller
                 $articulo = new Venta;
                 $articulo->usuario_id = $data->usuario_id;
                 $articulo->carta_id = $data->carta_id;
+                $articulo->name = $carta->name;
                 $articulo->quantity = $data->quantity;
                 $articulo->price = $data->price;
                 $articulo->save();
@@ -277,6 +280,67 @@ class cartasController extends Controller
         }
         return response()->json($response);
     }
+
+    public function buscarCartas(Request $req){ //Pide: api_token y nombre
+        $jdata = $req->getContent();
+        $data = json_decode($jdata);
+
+        $response["status"]=1;
+        try{
+            if($data->name){
+                $listaNombres = Cartas::pluck('name');
+                foreach ($listaNombres as $key => $nombreCompleto) {
+                    if(str_contains($nombreCompleto, $data->name)){
+                        $response["msg"]="Cartas encontradas";
+                        $coincidencia = Cartas::find($key+1);
+                        $response["coincidencias"][]["id"] = $coincidencia->id;
+                        $response["coincidencias"][]["nombre"] = $coincidencia->name;
+                    }
+                }
+                if(!isset($coincidencia)){
+                    $response["msg"] = "No hay ninguna coincidencia";
+                }
+            }else{
+                throw new Exception("Error: Introduce un nombre de una carta (name)");
+            }
+        }catch(\Exception $e){
+            $response["status"]=0;
+            $response["msg"]=$e->getMessage();
+        }
+        return response()->json($response);
+    }
+    
+    public function buscarAnuncio(Request $req){ //Pide: api_token y nombre
+        $jdata = $req->getContent();
+        $data = json_decode($jdata);
+
+        $response["status"]=1;
+        try{
+            if($data->name){
+                $listaNombres = Venta::pluck('name');
+                $coincidencias = [];
+                $response["msg"] = "No hay ninguna coincidencia";
+                foreach ($listaNombres as $key => $nombreCompleto) {
+                    if(str_contains($nombreCompleto, $data->name)){
+                        $response["msg"]="Articulos encontrados";
+                        array_push($coincidencias, Venta::find($key+1));
+                    }
+                }
+                
+                usort($coincidencias, function($object1, $object2) {
+                    return $object1->price > $object2->price;
+                });
+                $response["coincidencias"] = $coincidencias;
+            }else{
+                throw new Exception("Error: Introduce un nombre de una carta (name)");
+            }
+        }catch(\Exception $e){
+            $response["status"]=0;
+            $response["msg"]=$e->getMessage();
+        }
+        return response()->json($response);
+    }
+
 
     //VENTA CARTAS
     //poner articulo
