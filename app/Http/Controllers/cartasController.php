@@ -206,6 +206,34 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
+    public function asociarCartaColeccion(Request $req){ //Pide: api_token, carta_id y coleccion_id
+        $jdata = $req->getContent();
+        $data = json_decode($jdata);
+
+        $response["status"]=1;
+        try{
+            if($data->carta_id && $data->coleccion_id){
+                $carta = Carta::find($data->carta_id);
+                $coleccion = Coleccion::find($data->coleccion_id);
+                $cartacoleccionRepetida = Cartacoleccion::where('carta_id', $carta->id)->where('coleccion_id', $data->collection);
+                if(isset($cartacoleccionRepetida)){
+                    throw new Exception("Error: Esta carta ya está en esta colección");
+                }//Probar si funciona esto
+                $cartacoleccion = new Cartacoleccion;
+                $cartacoleccion->carta_id = $data->carta_id;
+                $cartacoleccion->coleccion_id = $data->coleccion_id;
+                $cartacoleccion->save();
+            }else{
+                throw new Exception("Error: Contraseña incorrecta");
+            }
+        }catch(\Exception $e){
+            $response["status"]=0;
+            $response["msg"]=$e->getMessage();
+        }
+        return response()->json($response);
+    }
+
+
 
     //FUNCIONES ADMIN:
     //editar carta
