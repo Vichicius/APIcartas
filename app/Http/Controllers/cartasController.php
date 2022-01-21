@@ -118,7 +118,7 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
-    public function crearCarta(Request $req){ //Pide: name, description y collection (opcional image)
+    public function crearCarta(Request $req){ //Pide: api_token, name, description y collection (opcional image)
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
@@ -156,7 +156,7 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
-    public function crearColecion(Request $req){ //Pide: name_coleccion, symbol_coleccion, release_date_coleccion, name_card, description_card (opcional imagen)
+    public function crearColecion(Request $req){ //Pide: api_token, name_coleccion, symbol_coleccion, release_date_coleccion, name_card, description_card (opcional imagen_card)
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
@@ -169,13 +169,17 @@ class cartasController extends Controller
                 //crear colección vacía
                 $coleccion->name = $data->name_coleccion;
                 $coleccion->symbol = $data->symbol_coleccion;
+                //regex de release_date en forma YYYY-MM-DD
+                if(!preg_match("^(19|20)\d\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])$^", $data->release_date_coleccion)) { 
+                    throw new Exception("Error: fecha no válida. El formato correcto es YYYY-MM-DD");
+                }
                 $coleccion->release_date = $data->release_date_coleccion; //validar fecha
                 $coleccion->save();
                 //crear carta
                 $carta->name = $data->name_card;
                 $carta->description = $data->description_card;
-                if(isset($data->image)){
-                    $carta->image = $data->image;
+                if(isset($data->image_card)){
+                    $carta->image = $data->image_card;
                 }
                 $carta->save();
                 //vincular carta a la colección
@@ -212,7 +216,7 @@ class cartasController extends Controller
                 if($carta == null){
                     throw new Exception("Error: Carta no encontrada");
                 }
-                $cartacoleccionRepetida = Cartacoleccion::where('carta_id', $carta->id)->where('coleccion_id', $data->collection)->first();
+                $cartacoleccionRepetida = Cartacoleccion::where('carta_id', $data->carta_id)->where('coleccion_id', $data->coleccion_id)->first();
                 if(isset($cartacoleccionRepetida)){
                     throw new Exception("Error: Esta carta ya está en esta colección");
                 }//Probar si funciona esto
@@ -230,14 +234,14 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
-    public function crearVenta(Request $req){ //Pide: api_token, usuario_id, carta_id, quantity, price
+    public function crearVenta(Request $req){ //Pide: api_token, carta_id, quantity, price
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
         $response["status"]=1;
         try{
-            if(isset($data->usuario_id) && isset($data->carta_id) && isset($data->quantity) && isset($data->price)){
-                $user = Usuario::find($data->usuario_id);
+            if(isset($data->carta_id) && isset($data->quantity) && isset($data->price)){
+                $user = Usuario::where('api_token', $data->api_token)->first();
                 $carta = Carta::find($data->carta_id);
                 if($user == null){
                     throw new Exception("Error: Usuario no encontrado");
@@ -252,7 +256,7 @@ class cartasController extends Controller
                     throw new Exception("Error: Precio mínimo es 0.01€");
                 }
                 $articulo = new Venta;
-                $articulo->usuario_id = $data->usuario_id;
+                $articulo->usuario_id = $user->id;
                 $articulo->carta_id = $data->carta_id;
                 $articulo->name = $carta->name;
                 $articulo->quantity = $data->quantity;
@@ -268,24 +272,29 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
-    public function buscarCartas(Request $req){ //Pide: api_token y nombre
+    public function buscarCartas(Request $req){ //Pide: api_token y name
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
         $response["status"]=1;
         try{
             if(isset($data->name)){
-                $listaNombres = Cartas::pluck('name');
+                $listaNombres = Carta::pluck('name','id')->toArray();
+                $listaRespuesta = [];
+                $listaRespuesta2 = [];
                 foreach ($listaNombres as $key => $nombreCompleto) {
                     if(str_contains($nombreCompleto, $data->name)){
                         $response["msg"]="Cartas encontradas";
-                        $coincidencia = Cartas::find($key+1);
-                        $response["coincidencias"][]["id"] = $coincidencia->id;
-                        $response["coincidencias"][]["nombre"] = $coincidencia->name;
+                        $coincidencia = Carta::where('name',$nombreCompleto)->first();
+                        $listaRespuesta["id"] = $coincidencia->id;
+                        $listaRespuesta["nombre"] = $coincidencia->name;
+                        array_push($listaRespuesta2, $listaRespuesta);
                     }
                 }
                 if(!isset($coincidencia)){
                     $response["msg"] = "No hay ninguna coincidencia";
+                }else{
+                    $response["coincidencias"] = $listaRespuesta2;
                 }
             }else{
                 throw new Exception("Error: Introduce un nombre de una carta (name)");
@@ -297,7 +306,7 @@ class cartasController extends Controller
         return response()->json($response);
     }
     
-    public function buscarAnuncio(Request $req){ //Pide: api_token y nombre
+    public function buscarAnuncio(Request $req){ //Pide: nombre
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
@@ -318,12 +327,19 @@ class cartasController extends Controller
                     return $object1->price > $object2->price;
                 });
 
+                $listaRespuesta = [];
+                $listaRespuesta2 = [];
                 foreach ($coincidencias as $key => $anuncio) {
-                    $response["coincidencias"][]["Carta"] = $anuncio->name;
-                    $response["coincidencias"][]["Cantidad"] = $anuncio->quantity;
-                    $response["coincidencias"][]["Precio"] = $anuncio->price;
-                    $response["coincidencias"][]["Vendedor"] = (Usuario::find($anuncio->usuario_id))->name;
+                    $listaRespuesta["id_anuncio"] =  $anuncio->id;
+                    $listaRespuesta["id_carta"] =  $anuncio->carta_id;
+                    $listaRespuesta["Carta"] =  $anuncio->name;
+                    $listaRespuesta["Cantidad"] = $anuncio->quantity;
+                    $listaRespuesta["Precio"] = $anuncio->price;
+                    $listaRespuesta["Vendedor"] = (Usuario::find($anuncio->usuario_id))->nickname;
+                    $listaRespuesta["id_vendedor"] =  $anuncio->usuario_id;
+                    array_push($listaRespuesta2, $listaRespuesta);
                 }
+                $response["coincidencias"] = $listaRespuesta2;
             }else{
                 throw new Exception("Error: Introduce un nombre de una carta (name)");
             }

@@ -25,12 +25,14 @@ class isAdminMiddleware
         $response["status"] = 1;
 
         try{
-            
+            if(!isset($data->api_token)){
+                throw new Exception("Error: No hay api_token");
+            }
             $user = Usuario::where('api_token', $data->api_token)->first();
             if(!isset($user)){
                 throw new Exception("Error: Ese token no existe");
             }
-            if($user->rol != "admin"){
+            if($user->rol != "administrador"){
                 throw new Exception("Error: No tienes suficientes permisos");
             }
             
