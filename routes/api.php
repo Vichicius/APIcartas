@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\cartasController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::middleware('isloggedMiddleware')->get('/user', function (Request $request) {
     return $request->user();
+});
+Route::middleware(["isloggedMiddleware"])->group(function () {
+    Route::prefix('users')->group(function(){
+        Route::post('register', [cartasController::class, 'register']);
+    });
+
 });
