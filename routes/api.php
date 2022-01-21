@@ -16,19 +16,19 @@ use App\Http\Controllers\cartasController;
 */
 
 
-Route::post('register', [cartasController::class, 'register']);
-Route::post('login', [cartasController::class, 'login']);
-Route::post('passRecovery', [cartasController::class, 'passRecovery']);
+Route::put('register', [cartasController::class, 'register']);
+Route::put('login', [cartasController::class, 'login']);
+Route::put('passRecovery', [cartasController::class, 'passRecovery']);
 
-Route::post('buscarAnuncio', [cartasController::class, 'buscarAnuncio']);
+Route::put('buscarAnuncio', [cartasController::class, 'buscarAnuncio']);
 
 Route::middleware(["isloggedMiddleware"])->group(function () {
-    Route::post('crearVenta', [cartasController::class, 'crearVenta']);
-    Route::post('buscarCartas', [cartasController::class, 'buscarCartas']);
+    Route::put('crearVenta', [cartasController::class, 'crearVenta']);
+    Route::put('buscarCartas', [cartasController::class, 'buscarCartas']);
 });
 
 Route::middleware(["isAdminMiddleware"])->group(function () {
-    Route::post('crearCarta', [cartasController::class, 'crearCarta']);
-    Route::post('crearColecion', [cartasController::class, 'crearColecion']);
-    Route::post('asociarCartaColeccion', [cartasController::class, 'asociarCartaColeccion']);
+    Route::put('crearCarta', [cartasController::class, 'crearCarta']);
+    Route::put('crearColecion', [cartasController::class, 'crearColecion']);
+    Route::put('asociarCartaColeccion', [cartasController::class, 'asociarCartaColeccion']);
 });

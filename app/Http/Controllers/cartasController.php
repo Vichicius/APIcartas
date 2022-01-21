@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 class cartasController extends Controller
 {
     //
-    public function register(Request $req){ //Pide: api_token, nickname, email, password y rol
+    public function register(Request $req){ //Pide: nickname, email, password y rol
         $jdata = $req->getContent();
         $data = json_decode($jdata);
         $response["status"]=1;
@@ -24,8 +24,12 @@ class cartasController extends Controller
         if(isset($data->nickname) && isset($data->email) && isset($data->password) && isset($data->rol)){
             try{
                 $user = new Usuario;
-                $user->name = $data->name;
-                $user->email = $data->email; //validar email
+                $user->nickname = $data->nickname;
+                //check email
+                if(!preg_match("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$^", $data->email)) { 
+                    throw new Exception("Error: Email no válido");
+                }
+                $user->email = $data->email;
                 if(preg_match("/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}/", $data->password)){
                     $user->password = Hash::make($data->password);
                 }else{
@@ -80,24 +84,6 @@ class cartasController extends Controller
                     //contraseña incorrecta
                     throw new Exception("Error: Contraseña incorrecta");
                 }
-            }
-        }catch(\Exception $e){
-            $response["status"]=0;
-            $response["msg"]=$e->getMessage();
-        }
-        return response()->json($response);
-    }
-
-    public function plantilla(Request $req){ //Pide: 
-        $jdata = $req->getContent();
-        $data = json_decode($jdata);
-
-        $response["status"]=1;
-        try{
-            if(isset($data->nickname) && isset($data->password)){
-                
-            }else{
-                throw new Exception("Error: ");
             }
         }catch(\Exception $e){
             $response["status"]=0;
