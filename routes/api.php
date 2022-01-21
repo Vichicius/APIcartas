@@ -15,12 +15,20 @@ use App\Http\Controllers\cartasController;
 |
 */
 
-Route::middleware('isloggedMiddleware')->get('/user', function (Request $request) {
-    return $request->user();
-});
-Route::middleware(["isloggedMiddleware"])->group(function () {
-    Route::prefix('users')->group(function(){
-        Route::post('register', [cartasController::class, 'register']);
-    });
 
+Route::post('register', [cartasController::class, 'register']);
+Route::post('login', [cartasController::class, 'login']);
+Route::post('passRecovery', [cartasController::class, 'passRecovery']);
+
+Route::post('buscarAnuncio', [cartasController::class, 'buscarAnuncio']);
+
+Route::middleware(["isloggedMiddleware"])->group(function () {
+    Route::post('crearVenta', [cartasController::class, 'crearVenta']);
+    Route::post('buscarCartas', [cartasController::class, 'buscarCartas']);
+});
+
+Route::middleware(["isAdminMiddleware"])->group(function () {
+    Route::post('crearCarta', [cartasController::class, 'crearCarta']);
+    Route::post('crearColecion', [cartasController::class, 'crearColecion']);
+    Route::post('asociarCartaColeccion', [cartasController::class, 'asociarCartaColeccion']);
 });
