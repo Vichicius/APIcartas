@@ -105,8 +105,9 @@ class cartasController extends Controller
                 }
                 $newPass = Str::random(16);
                 $user->password = Hash::make($newPass);
+                $user->api_token = NULL;
                 $user->save();
-                $response["msg"]="Contraseña cambiada.";
+                $response["msg"]="Contraseña cambiada. Vuelve a iniciar sesión.";
                 $response["Password"]=$newPass;
             }else{
                 throw new Exception("No has introducido nickname");
@@ -175,6 +176,7 @@ class cartasController extends Controller
                 }
                 $coleccion->release_date = $data->release_date_coleccion; //validar fecha
                 $coleccion->save();
+                //Elige entre crear una carta o vincular una ya existente
                 //crear carta
                 $carta->name = $data->name_card;
                 $carta->description = $data->description_card;
@@ -319,7 +321,8 @@ class cartasController extends Controller
                 foreach ($listaNombres as $key => $nombreCompleto) {
                     if(str_contains($nombreCompleto, $data->name)){
                         $response["msg"]="Articulos encontrados";
-                        array_push($coincidencias, Venta::find($key+1));
+                        array_push($coincidencias, Venta::where('name', $nombreCompleto)->first());
+                        //probar si se bugea con cartas que comparten parte del nombre
                     }
                 }
                 
