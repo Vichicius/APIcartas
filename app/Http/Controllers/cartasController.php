@@ -157,7 +157,7 @@ class cartasController extends Controller
         return response()->json($response);
     }
 
-    public function crearColecion(Request $req){ //Pide: api_token, name_coleccion, symbol_coleccion, release_date_coleccion, name_card, description_card (opcional imagen_card)
+    public function crearColecion(Request $req){ //Pide: api_token, name_coleccion, symbol_coleccion, release_date_coleccion, name_card[], description_card[] o carta_id[]
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
@@ -166,35 +166,77 @@ class cartasController extends Controller
         $coleccion = new Coleccion;
         $cartacoleccion = new Cartacoleccion;
         try{
-            if(isset($data->name_coleccion) && isset($data->symbol_coleccion) && isset($data->release_date_coleccion) && isset($data->name_card) && isset($data->description_card)){
-                //crear colección vacía
-                $coleccion->name = $data->name_coleccion;
-                $coleccion->symbol = $data->symbol_coleccion;
-                //regex de release_date en forma YYYY-MM-DD
-                if(!preg_match("^(19|20)\d\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])$^", $data->release_date_coleccion)) { 
-                    throw new Exception("Error: fecha no válida. El formato correcto es YYYY-MM-DD");
-                }
-                $coleccion->release_date = $data->release_date_coleccion; //validar fecha
-                $coleccion->save();
-                //Elige entre crear una carta o vincular una ya existente
-                //crear carta
-                $carta->name = $data->name_card;
-                $carta->description = $data->description_card;
-                if(isset($data->image_card)){
-                    $carta->image = $data->image_card;
-                }
-                $carta->save();
-                //vincular carta a la colección
-                $cartacoleccion->carta_id = $carta->id;
-                $cartacoleccion->coleccion_id = $coleccion->id;
-                $cartacoleccion->save();
-                //responder
-                $response["msg"] = "Colección y carta creada con éxito";
-                $response["id"]["Coleccion"] = $coleccion->id;
-                $response["id"]["Carta"] = $carta->id;
-            }else{
-                throw new Exception("Error: Introduce name_coleccion, symbol_coleccion, release_date_coleccion, name_card y description_card");
+
+            //Primero que me haya puesto algo para crear la coleccion
+            if(!(isset($data->name_coleccion) && isset($data->symbol_coleccion) && isset($data->release_date_coleccion)) ){
+                throw new Exception("Error: Introduce datos para crear la coleccion");
             }
+
+            //Comprobar que no me va a crear la coleccion vacia (que haya introducido carta_id o una carta nueva con nombre y descripcion)
+            //o me pones carta id o me pones cartanueva
+            if(!( isset($data->carta_id) || (isset($data->name_card) && isset($data->description_card)) )){
+                throw new Exception("Error: No se puede crear una colección vacía. Introduce una carta_id o name_card y description_card para una carta nueva");
+            }
+
+            //comprobar que no existe ya la coleccion y que carta_id existe o los arrays de name_card y description_card son de la misma longitud
+            $coleccionRepetida = Coleccion::where('name',$data->name_coleccion)->first();
+            if(isset($coleccionRepetida)){
+                throw new Exception("Error: Esa colección ya existe");
+            }
+            if(isset($data->carta_id)){
+                foreach ($data->carta_id as $key => $id) {
+                    $cartabuscada = Carta::find($id);
+                    if(!isset($cartabuscada)){
+                        throw new Exception("Error: La carta con id: $id no existe");
+                    }
+                }
+            }
+            if(isset($data->name_card) && isset($data->description_card)){
+                $cantidadNombres = count($data->name_card);
+                $cantidadDescripciones = count($data->description_card);
+                if($cantidadNombres != $cantidadDescripciones){
+                    throw new Exception("Error: Introduce tantos nombres como descripciones");
+                }
+            }
+
+            //crear colección vacía
+            $coleccion->name = $data->name_coleccion;
+            $coleccion->symbol = $data->symbol_coleccion;
+            //regex de release_date en forma YYYY-MM-DD
+            if(!preg_match("^(19|20)\d\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])$^", $data->release_date_coleccion)) { 
+                throw new Exception("Error: fecha no válida. El formato correcto es YYYY-MM-DD");
+            }
+            $coleccion->release_date = $data->release_date_coleccion; //validar fecha
+            $coleccion->save();
+
+            //crear las cartas y vincularlas
+            if(isset($data->name_card)){
+                foreach ($data->name_card as $posicion => $nombre) {
+                    $carta = new Carta;
+                    $carta->name = $nombre;
+                    $carta->description = $data->description_card[$posicion];
+                    $carta->save();
+    
+                    $cartacoleccion = new Cartacoleccion;
+                    $cartacoleccion->carta_id = $carta->id;
+                    $cartacoleccion->coleccion_id = $coleccion->id;
+                    $cartacoleccion->save();
+                }
+            }
+            //o vincular las ya existentes
+            if(isset($data->carta_id)){
+                foreach ($data->carta_id as $key => $id) {
+                    $cartacoleccion = new Cartacoleccion;
+                    $cartacoleccion->carta_id = $id;
+                    $cartacoleccion->coleccion_id = $coleccion->id;
+                    $cartacoleccion->save();
+                }
+            }
+
+            //responder
+            $response["msg"] = "Colección creada con éxito";
+            $response["id"] = $coleccion->id;
+            
         }catch(\Exception $e){
             $response["status"]=0;
             $response["msg"]=$e->getMessage();
