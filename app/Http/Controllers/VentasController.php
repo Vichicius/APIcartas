@@ -83,7 +83,7 @@ class VentasController extends Controller
         return response()->json($response);
     }
     
-    public function buscarAnuncio(Request $req){ //Pide: nombre
+    public function buscarAnuncio(Request $req){ //Pide: name
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
@@ -97,7 +97,6 @@ class VentasController extends Controller
                     if(str_contains($nombreCompleto, $data->name)){
                         $response["msg"]="Articulos encontrados";
                         array_push($coincidencias, Venta::where('name', $nombreCompleto)->first());
-                        //probar si se bugea con cartas que comparten parte del nombre
                     }
                 }
                 

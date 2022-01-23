@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\cartasController;
+use App\Http\Controllers\UsuariosController;
+use App\Http\Controllers\VentasController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,15 +18,15 @@ use App\Http\Controllers\cartasController;
 */
 
 
-Route::put('register', [cartasController::class, 'register']);
-Route::put('login', [cartasController::class, 'login']);
-Route::put('passRecovery', [cartasController::class, 'passRecovery']);
+Route::put('register', [UsuariosController::class, 'register']);
+Route::put('login', [UsuariosController::class, 'login']);
+Route::put('passRecovery', [UsuariosController::class, 'passRecovery']);
 
-Route::put('buscarAnuncio', [cartasController::class, 'buscarAnuncio']);
+Route::put('buscarAnuncio', [VentasController::class, 'buscarAnuncio']);
 
 Route::middleware(["isloggedMiddleware"])->group(function () {
-    Route::put('crearVenta', [cartasController::class, 'crearVenta']);
-    Route::put('buscarCartas', [cartasController::class, 'buscarCartas']);
+    Route::put('crearVenta', [VentasController::class, 'crearVenta']);
+    Route::put('buscarCartas', [VentasController::class, 'buscarCartas']);
 });
 
 Route::middleware(["isAdminMiddleware"])->group(function () {
