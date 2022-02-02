@@ -56,17 +56,15 @@ class VentasController extends Controller
         $response["status"]=1;
         try{
             if(isset($data->name)){
-                $listaNombres = Carta::pluck('name','id')->toArray();
+                
+                $cartas = Carta::where('name','LIKE','%'.$data->name.'%')->get();
                 $listaRespuesta = [];
                 $listaRespuesta2 = [];
-                foreach ($listaNombres as $key => $nombreCompleto) {
-                    if(str_contains($nombreCompleto, $data->name)){
-                        $response["msg"]="Cartas encontradas";
-                        $coincidencia = Carta::where('name',$nombreCompleto)->first();
-                        $listaRespuesta["id"] = $coincidencia->id;
-                        $listaRespuesta["nombre"] = $coincidencia->name;
-                        array_push($listaRespuesta2, $listaRespuesta);
-                    }
+                foreach ($cartas as $key => $carta) {
+                    $response["msg"]="Cartas encontradas";
+                    $listaRespuesta["id"] = $carta->id;
+                    $listaRespuesta["nombre"] = $carta->name;
+                    array_push($listaRespuesta2, $listaRespuesta);
                 }
                 if(!isset($coincidencia)){
                     $response["msg"] = "No hay ninguna coincidencia";
@@ -90,15 +88,13 @@ class VentasController extends Controller
         $response["status"]=1;
         try{
             if(isset($data->name)){
-                $listaNombres = Venta::pluck('name');
-                $coincidencias = [];
-                $response["msg"] = "No hay ninguna coincidencia";
-                foreach ($listaNombres as $key => $nombreCompleto) {
-                    if(str_contains($nombreCompleto, $data->name)){
-                        $response["msg"]="Articulos encontrados";
-                        array_push($coincidencias, Venta::where('name', $nombreCompleto)->first());
-                    }
+
+                $coincidencias = Venta::where('name','LIKE','%'.$data->name.'%')->get();
+
+                if(count($coincidencias) == 0){
+                    throw new Exception("No hay ninguna coincidencia");
                 }
+                $response["msg"]="Articulos encontrados";
                 
                 usort($coincidencias, function($object1, $object2) {
                     return $object1->price > $object2->price;
