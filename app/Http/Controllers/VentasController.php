@@ -56,8 +56,11 @@ class VentasController extends Controller
         $response["status"]=1;
         try{
             if(isset($data->name)){
-                
-                $cartas = Carta::where('name','LIKE','%'.$data->name.'%')->get();
+
+                $cartas = Carta::where('name','like','%'.$data->name.'%')->get();
+                if(count($cartas) == 0){
+                    throw new Exception("No hay ninguna coincidencia");
+                }
                 $listaRespuesta = [];
                 $listaRespuesta2 = [];
                 foreach ($cartas as $key => $carta) {
@@ -66,11 +69,9 @@ class VentasController extends Controller
                     $listaRespuesta["nombre"] = $carta->name;
                     array_push($listaRespuesta2, $listaRespuesta);
                 }
-                if(!isset($coincidencia)){
-                    $response["msg"] = "No hay ninguna coincidencia";
-                }else{
-                    $response["coincidencias"] = $listaRespuesta2;
-                }
+
+                $response["coincidencias"] = $listaRespuesta2;
+
             }else{
                 throw new Exception("Error: Introduce un nombre de una carta (name)");
             }
@@ -80,7 +81,7 @@ class VentasController extends Controller
         }
         return response()->json($response);
     }
-    
+
     public function buscarAnuncio(Request $req){ //Pide: name
         $jdata = $req->getContent();
         $data = json_decode($jdata);
@@ -89,13 +90,18 @@ class VentasController extends Controller
         try{
             if(isset($data->name)){
 
-                $coincidencias = Venta::where('name','LIKE','%'.$data->name.'%')->get();
+                $coincidenciasColeccion = Venta::where('name','like','%'.$data->name.'%')->get();
 
-                if(count($coincidencias) == 0){
+                if(count($coincidenciasColeccion) == 0){
                     throw new Exception("No hay ninguna coincidencia");
                 }
+                $coincidencias = [];
+                foreach ($coincidenciasColeccion as $key => $coincidencia) {
+                    array_push($coincidencias, $coincidencia);
+                }
+
                 $response["msg"]="Articulos encontrados";
-                
+
                 usort($coincidencias, function($object1, $object2) {
                     return $object1->price > $object2->price;
                 });
