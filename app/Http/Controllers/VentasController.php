@@ -7,6 +7,7 @@ use App\Models\Usuario;
 use App\Models\Carta;
 use App\Models\Venta;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class VentasController extends Controller
 {
@@ -90,7 +91,11 @@ class VentasController extends Controller
         try{
             if(isset($data->name)){
 
-                $coincidenciasColeccion = Venta::where('name','like','%'.$data->name.'%')->get();
+
+                $coincidenciasColeccion = DB::table('ventas')
+                                        ->leftjoin('cartas', 'ventas.carta_id', '=', 'cartas.id')
+                                        ->where('cartas.name', 'like','%'.$data->name.'%')
+                                        ->get()->toArray();
 
                 if(count($coincidenciasColeccion) == 0){
                     throw new Exception("No hay ninguna coincidencia");
