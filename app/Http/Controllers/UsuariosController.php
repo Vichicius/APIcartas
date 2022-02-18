@@ -19,9 +19,18 @@ class UsuariosController extends Controller
         if(isset($data->nickname) && isset($data->email) && isset($data->password) && isset($data->rol)){
             try{
                 $user = new Usuario;
+                //que sea string, max 40 caracteres y que sea unico
+                $nombre = $data->nickname;
+                if(!is_string($nombre) || strlen($nombre) > 40){
+                    throw new Exception("Error: Usuario no válido");
+                }
+                $nombres = Usuario::pluck('nickname')->get();
+                if(in_array($nombre, $nombres)){
+                    throw new Exception("Error: Nombre de usuario en uso");
+                }
                 $user->nickname = $data->nickname;
                 //check email
-                if(!preg_match("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$^", $data->email)) { 
+                if(!preg_match("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$^", $data->email)) {
                     throw new Exception("Error: Email no válido");
                 }
                 $user->email = $data->email;
@@ -45,13 +54,13 @@ class UsuariosController extends Controller
                 $response["status"]=0;
                 $response["msg"]=$e->getMessage();
             }
-            
+
         }else{
             $response["status"]=0;
             $response["msg"]="introduce name, email, password y rol";
         }
 
-        
+
         return response()->json($response);
     }
 
@@ -66,7 +75,7 @@ class UsuariosController extends Controller
                     throw new Exception("Error: Nickname no existe");
                 }
                 if(Hash::check($data->password, $user->password)){
-                    
+
                     $allTokens = Usuario::pluck('api_token')->toArray();
                     do {
                         $user->api_token = Hash::make(now().$user->email);
@@ -87,16 +96,16 @@ class UsuariosController extends Controller
         return response()->json($response);
     }
 
-    public function passRecovery(Request $req){ //Pide: nickname
+    public function passRecovery(Request $req){ //Pide: email
         $jdata = $req->getContent();
         $data = json_decode($jdata);
 
         $response["status"]= 1;
         try{
-            if(isset($data->nickname)){
-                $user = Usuario::where('nickname', $data->nickname)->first();
+            if(isset($data->email)){
+                $user = Usuario::where('email', $data->email)->first();
                 if(!isset($user)){
-                    throw new Exception("Nickname no existe");
+                    throw new Exception("email no existe");
                 }
                 $newPass = Str::random(16);
                 $user->password = Hash::make($newPass);
