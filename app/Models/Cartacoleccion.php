@@ -7,5 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cartacoleccion extends Model
 {
+    use \Backpack\CRUD\app\Models\Traits\CrudTrait;
     use HasFactory;
 }
