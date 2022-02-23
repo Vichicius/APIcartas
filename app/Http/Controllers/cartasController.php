@@ -10,7 +10,7 @@ use Exception;
 
 class cartasController extends Controller
 {
-    
+
     public function crearCarta(Request $req){ //Pide: api_token, name, description y collection (opcional image)
         $jdata = $req->getContent();
         $data = json_decode($jdata);
@@ -28,6 +28,14 @@ class cartasController extends Controller
                     throw new Exception("Error: La coleccion introducida no existe");
                 }
                 //crear carta
+                $nombre = $data->name;
+                if(!is_string($nombre) || strlen($nombre) > 60){
+                    throw new Exception("Error: Nombre no válido");
+                }
+                $descripcion = $data->description;
+                if(!is_string($descripcion) || strlen($descripcion) > 150){
+                    throw new Exception("Error: Descripción no válida");
+                }
                 $carta->name = $data->name;
                 $carta->description = $data->description;
                 if(isset($data->image)){
@@ -66,7 +74,7 @@ class cartasController extends Controller
 
             //Comprobar que no me va a crear la coleccion vacia (que haya introducido carta_id o una carta nueva con nombre y descripcion)
             //o me pones carta id o me pones cartanueva
-            if(!( isset($data->carta_id) || (isset($data->name_card) && isset($data->description_card)) )){
+            if(!( isset($data->carta_id) || (isset($data->name_card) && isset($data->description_card))) ){
                 throw new Exception("Error: No se puede crear una colección vacía. Introduce una carta_id o name_card y description_card para una carta nueva");
             }
 
@@ -92,10 +100,13 @@ class cartasController extends Controller
             }
 
             //crear colección vacía
+            if(!is_string($data->name_coleccion) || strlen($data->name_coleccion) > 50){
+                throw new Exception("Error: Nombre de colección no válido");
+            }
             $coleccion->name = $data->name_coleccion;
             $coleccion->symbol = $data->symbol_coleccion;
             //regex de release_date en forma YYYY-MM-DD
-            if(!preg_match("^(19|20)\d\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])$^", $data->release_date_coleccion)) { 
+            if(!preg_match("^(19|20)\d\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])$^", $data->release_date_coleccion)) {
                 throw new Exception("Error: fecha no válida. El formato correcto es YYYY-MM-DD");
             }
             $coleccion->release_date = $data->release_date_coleccion; //validar fecha
@@ -104,11 +115,17 @@ class cartasController extends Controller
             //crear las cartas y vincularlas
             if(isset($data->name_card)){
                 foreach ($data->name_card as $posicion => $nombre) {
+                    if(!is_string($nombre) || strlen($nombre) > 60){
+                        throw new Exception("Error: Nombre no válido");
+                    }
+                    if(!is_string($data->description_card[$posicion]) || strlen($data->description_card[$posicion]) > 150){
+                        throw new Exception("Error: Descripción no válida");
+                    }
                     $carta = new Carta;
                     $carta->name = $nombre;
                     $carta->description = $data->description_card[$posicion];
                     $carta->save();
-    
+
                     $cartacoleccion = new Cartacoleccion;
                     $cartacoleccion->carta_id = $carta->id;
                     $cartacoleccion->coleccion_id = $coleccion->id;
@@ -128,7 +145,7 @@ class cartasController extends Controller
             //responder
             $response["msg"] = "Colección creada con éxito";
             $response["id"] = $coleccion->id;
-            
+
         }catch(\Exception $e){
             $response["status"]=0;
             $response["msg"]=$e->getMessage();

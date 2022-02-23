@@ -35,7 +35,7 @@ class isAdminMiddleware
             if($user->rol != "administrador"){
                 throw new Exception("Error: No tienes suficientes permisos");
             }
-            
+
             $request->attributes->add(['userMiddleware' => $user]);
 
             return $next($request);

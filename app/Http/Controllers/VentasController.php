@@ -7,6 +7,7 @@ use App\Models\Usuario;
 use App\Models\Carta;
 use App\Models\Venta;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class VentasController extends Controller
 {
@@ -56,23 +57,22 @@ class VentasController extends Controller
         $response["status"]=1;
         try{
             if(isset($data->name)){
-                $listaNombres = Carta::pluck('name','id')->toArray();
+
+                $cartas = Carta::where('name','like','%'.$data->name.'%')->get();
+                if(count($cartas) == 0){
+                    throw new Exception("No hay ninguna coincidencia");
+                }
                 $listaRespuesta = [];
                 $listaRespuesta2 = [];
-                foreach ($listaNombres as $key => $nombreCompleto) {
-                    if(str_contains($nombreCompleto, $data->name)){
-                        $response["msg"]="Cartas encontradas";
-                        $coincidencia = Carta::where('name',$nombreCompleto)->first();
-                        $listaRespuesta["id"] = $coincidencia->id;
-                        $listaRespuesta["nombre"] = $coincidencia->name;
-                        array_push($listaRespuesta2, $listaRespuesta);
-                    }
+                foreach ($cartas as $key => $carta) {
+                    $response["msg"]="Cartas encontradas";
+                    $listaRespuesta["id"] = $carta->id;
+                    $listaRespuesta["nombre"] = $carta->name;
+                    array_push($listaRespuesta2, $listaRespuesta);
                 }
-                if(!isset($coincidencia)){
-                    $response["msg"] = "No hay ninguna coincidencia";
-                }else{
-                    $response["coincidencias"] = $listaRespuesta2;
-                }
+
+                $response["coincidencias"] = $listaRespuesta2;
+
             }else{
                 throw new Exception("Error: Introduce un nombre de una carta (name)");
             }
@@ -82,7 +82,7 @@ class VentasController extends Controller
         }
         return response()->json($response);
     }
-    
+
     public function buscarAnuncio(Request $req){ //Pide: name
         $jdata = $req->getContent();
         $data = json_decode($jdata);
@@ -90,16 +90,23 @@ class VentasController extends Controller
         $response["status"]=1;
         try{
             if(isset($data->name)){
-                $listaNombres = Venta::pluck('name');
-                $coincidencias = [];
-                $response["msg"] = "No hay ninguna coincidencia";
-                foreach ($listaNombres as $key => $nombreCompleto) {
-                    if(str_contains($nombreCompleto, $data->name)){
-                        $response["msg"]="Articulos encontrados";
-                        array_push($coincidencias, Venta::where('name', $nombreCompleto)->first());
-                    }
+
+
+                $coincidenciasColeccion = DB::table('ventas')
+                                        ->leftjoin('cartas', 'ventas.carta_id', '=', 'cartas.id')
+                                        ->where('cartas.name', 'like','%'.$data->name.'%')
+                                        ->get()->toArray();
+
+                if(count($coincidenciasColeccion) == 0){
+                    throw new Exception("No hay ninguna coincidencia");
                 }
-                
+                $coincidencias = [];
+                foreach ($coincidenciasColeccion as $key => $coincidencia) {
+                    array_push($coincidencias, $coincidencia);
+                }
+
+                $response["msg"]="Articulos encontrados";
+
                 usort($coincidencias, function($object1, $object2) {
                     return $object1->price > $object2->price;
                 });

@@ -25,12 +25,14 @@ class isloggedMiddleware
         $response["status"] = 1;
 
         try{
-            
+            if(!isset($data->api_token)){
+                throw new Exception("Error: Introduce api_token");
+            }
             $user = Usuario::where('api_token', $data->api_token)->first();
             if(!isset($user)){
                 throw new Exception("Error: Ese token no existe");
             }
-            
+
             $request->attributes->add(['userMiddleware' => $user]);
 
             return $next($request);
@@ -42,7 +44,7 @@ class isloggedMiddleware
 
         return response()->json($response);
     }
-    
+
 }
 
 
