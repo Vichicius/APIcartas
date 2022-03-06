@@ -15,7 +15,7 @@ class loginTest extends TestCase
      */
     public function test_login_correcto()
     {
-        $response = $this->putJson('/api/login', ['nickname' => 'admin', 'password' => 'Luis123$']);
+        $response = $this->putJson('/api/login', ['nickname' => 'luis', 'password' => 'Luis123$']);
 
         $response->assertStatus(200)
         ->assertJson([
