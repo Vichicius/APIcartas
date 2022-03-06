@@ -24,7 +24,7 @@ class UsuariosController extends Controller
                 if(!is_string($nombre) || strlen($nombre) > 40){
                     throw new Exception("Error: Usuario no válido");
                 }
-                $nombres = Usuario::pluck('nickname')->get();
+                $nombres = Usuario::pluck('nickname')->toArray();
                 if(in_array($nombre, $nombres)){
                     throw new Exception("Error: Nombre de usuario en uso");
                 }
