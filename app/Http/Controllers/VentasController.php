@@ -36,7 +36,6 @@ class VentasController extends Controller
                 $articulo = new Venta;
                 $articulo->usuario_id = $user->id;
                 $articulo->carta_id = $data->carta_id;
-                $articulo->name = $carta->name;
                 $articulo->quantity = $data->quantity;
                 $articulo->price = $data->price;
                 $articulo->save();
